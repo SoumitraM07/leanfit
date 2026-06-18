@@ -30,6 +30,7 @@
     background:radial-gradient(1200px 600px at 80% -10%,#16313a 0%,transparent 60%),
                radial-gradient(900px 500px at -10% 10%,#1d2440 0%,transparent 55%),var(--bg);
     color:var(--txt);line-height:1.55;min-height:100vh;
+    -webkit-text-size-adjust:100%;text-size-adjust:100%;
   }
   a{color:var(--accent-2);text-decoration:none}
   .wrap{max-width:1080px;margin:0 auto;padding:0 18px}
@@ -348,7 +349,26 @@
     background:var(--accent);color:#04201a;font-weight:700;padding:12px 20px;border-radius:12px;
     box-shadow:var(--shadow);transition:.3s;z-index:55;font-size:14px}
   .save-toast.show{transform:translateX(-50%) translateY(0)}
-  @media(max-width:560px){.stats,.dash-grid{grid-template-columns:repeat(2,1fr)}.dayrow .nm{width:84px}}
+  @media(max-width:560px){
+    .wrap{padding:0 14px}
+    .stats,.dash-grid,.macro-grid{grid-template-columns:repeat(2,1fr)}
+    .dayrow .nm{width:80px}
+    /* 16px inputs stop iOS Safari auto-zooming when you tap a field */
+    .sets input[type=number],.field input,.field.num input,.keybox input,.quickadd > input,.bodyform input{font-size:16px}
+    .sets td{padding:4px 4px}
+    .sets td.setno{width:60px;font-size:12px}
+    .sets input[type=number]{padding:11px 4px}
+    .lastref{font-size:10px}
+    .sets input[type=checkbox]{width:26px;height:26px}
+    .ex{padding:14px}
+    .mcard{padding:12px}
+    .mcard .mv{font-size:20px}
+    .mcard .mt{font-size:10px}
+    .field.num input{width:60px}
+    .day-head h2{font-size:20px}
+    .section-title{font-size:21px}
+    .vid{padding:9px 12px}
+  }
 </style>
 </head>
 <body>
