@@ -1315,24 +1315,32 @@ function dayTotals(date){
 }
 
 /* ---- Image resize to data URL (keeps storage small, no blob: needed) ---- */
-function resizeImage(file, maxDim, quality){
-  return new Promise((resolve,reject)=>{
+function loadViaImage(file){
+  return new Promise(function(resolve,reject){
     const fr=new FileReader();
-    fr.onload=()=>{
-      const img=new Image();
-      img.onload=()=>{
-        const scale=Math.min(1, maxDim/Math.max(img.width,img.height));
-        const w=Math.max(1,Math.round(img.width*scale)), h=Math.max(1,Math.round(img.height*scale));
-        const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
-        cv.getContext("2d").drawImage(img,0,0,w,h);
-        try{ resolve(cv.toDataURL("image/jpeg", quality)); }catch(e){ reject(e); }
-      };
-      img.onerror=()=>reject(new Error("image"));
-      img.src=fr.result;
-    };
-    fr.onerror=()=>reject(new Error("file"));
+    fr.onload=function(){ const img=new Image(); img.onload=function(){ resolve(img); }; img.onerror=function(){ reject(new Error("decode")); }; img.src=fr.result; };
+    fr.onerror=function(){ reject(new Error("read")); };
     fr.readAsDataURL(file);
   });
+}
+/* createImageBitmap handles large photos & orientation far better than <img>;
+   fall back to <img> if it's unavailable or the format is unsupported. */
+function loadBitmap(file){
+  if(window.createImageBitmap){
+    return createImageBitmap(file, {imageOrientation:"from-image"})
+      .catch(function(){ return createImageBitmap(file); })
+      .catch(function(){ return loadViaImage(file); });
+  }
+  return loadViaImage(file);
+}
+function drawToDataURL(src, maxDim, quality){
+  const w0=src.width||src.naturalWidth, h0=src.height||src.naturalHeight;
+  if(!w0 || !h0) throw new Error("no dimensions");
+  const scale=Math.min(1, maxDim/Math.max(w0,h0));
+  const w=Math.max(1,Math.round(w0*scale)), h=Math.max(1,Math.round(h0*scale));
+  const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+  const ctx=cv.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,w,h); ctx.drawImage(src,0,0,w,h);
+  return cv.toDataURL("image/jpeg", quality);
 }
 
 /* ---- AI calorie estimate (bring-your-own OpenAI key) ---- */
@@ -1394,9 +1402,18 @@ function hideAiLoader(){
 async function estimateFromPhoto(file, statusEl, prefill){
   let big, thumb;
   try{
-    big   = await resizeImage(file, 768, 0.7);
-    thumb = await resizeImage(file, 200, 0.55);
-  }catch(e){ statusEl.className="ai-status err"; statusEl.textContent="Couldn't read that image."; return; }
+    const bmp = await loadBitmap(file);
+    big   = drawToDataURL(bmp, 768, 0.7);
+    thumb = drawToDataURL(bmp, 200, 0.55);
+    if(bmp && bmp.close) bmp.close();
+  }catch(e){
+    statusEl.className="ai-status err";
+    const heic = /hei[cf]/i.test(file.type||"") || /\.hei[cf]$/i.test(file.name||"");
+    statusEl.textContent = heic
+      ? "This is a HEIC photo, which phones can't show in the browser. In your camera settings switch the photo format to 'JPG / Most compatible', or pick a JPG from your gallery — or just type the values in."
+      : "Couldn't read that image (it may be too large or an unsupported format). Try a different photo, or enter the values manually.";
+    return;
+  }
   prefill.thumb = thumb;
   const key=((localStorage.getItem(APIKEY_KEY)||"").trim()) || DEFAULT_AI_KEY;
   if(!key){
