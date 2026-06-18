@@ -315,6 +315,34 @@
     border-radius:12px;box-shadow:var(--shadow);transition:.35s;z-index:56;font-size:14px;text-align:center}
   .pr-toast.show{transform:translateX(-50%) translateY(0)}
 
+  /* welcome splash */
+  #splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;
+    background:radial-gradient(1100px 700px at 72% 18%,#10303a 0%,#0d1117 62%);overflow:hidden;
+    transition:opacity .6s ease, transform .6s ease}
+  #splash.gone{opacity:0;transform:scale(1.06);pointer-events:none}
+  .splash-bg::before,.splash-bg::after{content:"";position:absolute;border-radius:50%;filter:blur(70px);opacity:.45;animation:floatBlob 9s ease-in-out infinite}
+  .splash-bg::before{width:320px;height:320px;background:#22d3a8;top:6%;left:6%}
+  .splash-bg::after{width:380px;height:380px;background:#38bdf8;bottom:4%;right:4%;animation-delay:-4.5s}
+  @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(34px,-28px)}}
+  .splash-inner{position:relative;z-index:2;max-width:580px}
+  .wave{font-size:56px;display:inline-block;transform-origin:70% 70%;animation:wave 2.2s ease-in-out infinite}
+  @keyframes wave{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(16deg)}20%{transform:rotate(-10deg)}30%{transform:rotate(16deg)}40%{transform:rotate(-6deg)}50%{transform:rotate(10deg)}}
+  .greet{font-size:clamp(34px,8vw,66px);font-weight:800;letter-spacing:-1.5px;margin:8px 0 6px;line-height:1.04}
+  .greet span{display:inline-block;opacity:0;transform:translateY(30px);animation:riseIn .75s cubic-bezier(.2,.7,.2,1) forwards}
+  .greet span:nth-child(1){animation-delay:.15s}
+  .greet span:nth-child(2){animation-delay:.38s;background:linear-gradient(90deg,#22d3a8,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{color:#9aa7b8;font-size:clamp(15px,3.6vw,21px);opacity:0;animation:riseIn .75s ease .62s forwards;margin-bottom:28px}
+  @keyframes riseIn{to{opacity:1;transform:none}}
+  .enter-btn{cursor:pointer;border:none;color:#04201a;font-weight:800;font-size:16px;padding:15px 30px;border-radius:999px;
+    background:linear-gradient(135deg,#22d3a8,#38bdf8);opacity:0;
+    animation:riseIn .75s ease .85s forwards, glow 2.4s ease-in-out 1.6s infinite}
+  .enter-btn:hover{filter:brightness(1.05)}
+  @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(34,211,168,0)}50%{box-shadow:0 0 34px 5px rgba(34,211,168,.5)}}
+  .enter-hint{margin-top:18px;color:#6b7a8d;font-size:13px;opacity:0;animation:riseIn .75s ease 1.05s forwards}
+  .enter-hint kbd{background:#19212e;border:1px solid #2a3444;border-bottom-width:2px;border-radius:6px;padding:2px 8px;color:#e6edf3;font-family:inherit}
+  @media(max-width:560px){ .enter-hint{display:none} }
+  @media(prefers-reduced-motion:reduce){ .wave,.splash-bg::before,.splash-bg::after,.enter-btn{animation:none} .greet span,.tagline,.enter-hint{opacity:1;transform:none;animation:none} }
+
   footer{text-align:center;color:var(--muted);font-size:13px;padding:40px 0 30px;margin-top:40px;border-top:1px solid var(--line)}
   .save-toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-100px);
     background:var(--accent);color:#04201a;font-weight:700;padding:12px 20px;border-radius:12px;
@@ -324,6 +352,27 @@
 </style>
 </head>
 <body>
+
+<div id="splash">
+  <div class="splash-bg"></div>
+  <div class="splash-inner">
+    <div class="wave">👋</div>
+    <h1 class="greet"><span>Hello</span> <span>Soumitra</span></h1>
+    <p class="tagline">Let’s start the workout for today 💪</p>
+    <button id="enterBtn" type="button" class="enter-btn">Let’s go →</button>
+    <div class="enter-hint">press <kbd>Enter</kbd> to begin</div>
+  </div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById("splash"); if(!s) return;
+  function go(){ s.classList.add("gone"); setTimeout(function(){ s.style.display="none"; }, 650); document.removeEventListener("keydown", onKey); }
+  function onKey(e){ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); go(); } }
+  document.addEventListener("keydown", onKey);
+  var b=document.getElementById("enterBtn"); if(b) b.addEventListener("click", go);
+  s.addEventListener("click", function(e){ if(e.target===s || (e.target && e.target.className==="splash-bg")) go(); });
+})();
+</script>
 
 <header class="topbar">
   <div class="wrap topbar-inner">
