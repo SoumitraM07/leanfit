@@ -455,7 +455,6 @@
       </div>
       <button class="ghost" id="resetWeek">Reset week</button>
     </div>
-    <div id="phase"></div>
   </div>
 
   <div id="views"></div>
@@ -1821,7 +1820,6 @@ function buildGuide(){
 function render(){
   document.getElementById("wkLabel").textContent = "Week "+currentWeek;
   buildNav();
-  renderPhase();
   buildDayPills();
   const host = document.getElementById("views");
   host.replaceChildren();
