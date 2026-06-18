@@ -1886,6 +1886,22 @@ window.__applySnapshot = function(d, replace){
   render();
 };
 
+/* ===== Apple Health / Shortcuts bridge: ?steps=NN&weight=NN logs to today ===== */
+(function importHealthParams(){
+  try{
+    const p = new URLSearchParams(location.search);
+    let msg = "";
+    const s = p.get("steps");
+    if(s!==null){ const n=Math.round(Number(s)); if(Number.isFinite(n) && n>=0 && n<=100000){ dayMeals(todayStr()).steps=n; saveJSON(MEALS_KEY, meals); msg="✓ Synced "+n.toLocaleString()+" steps from Health"; } }
+    const w = p.get("weight");
+    if(w!==null){ const wn=Number(w); if(Number.isFinite(wn) && wn>0 && wn<=500){ if(!body[todayStr()]) body[todayStr()]={}; body[todayStr()].weight=Math.round(wn*10)/10; saveJSON(BODY_KEY, body); msg = msg ? msg+" & weight" : "✓ Synced weight from Health"; } }
+    if(msg){
+      history.replaceState(null, "", location.pathname);
+      setTimeout(function(){ const t=document.getElementById("toast"); if(t){ t.textContent=msg; t.classList.add("show"); setTimeout(function(){ t.classList.remove("show"); t.textContent="✓ Progress saved"; }, 2200); } }, 400);
+    }
+  }catch(e){}
+})();
+
 render();
 </script>
 
