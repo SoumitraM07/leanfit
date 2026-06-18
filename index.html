@@ -354,6 +354,25 @@
   @media(max-width:560px){ .enter-hint{display:none} }
   @media(prefers-reduced-motion:reduce){ .wave,.splash-bg::before,.splash-bg::after,.enter-btn{animation:none} .greet span,.tagline,.enter-hint{opacity:1;transform:none;animation:none} }
 
+  /* AI analysing loader (full screen) */
+  #aiLoader{position:fixed;inset:0;z-index:9998;display:none;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:24px;background-color:#0d1117;
+    background-image:radial-gradient(900px 600px at 50% 30%,#10303a 0%,#0d1117 65%)}
+  #aiLoader.show{display:flex;animation:fadeIn .25s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .ai-orb{position:relative;width:110px;height:110px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 42%, rgba(34,211,168,.28), transparent 70%)}
+  .ai-orb::before{content:"";position:absolute;inset:-8px;border-radius:50%;border:4px solid rgba(56,189,248,.18);border-top-color:var(--accent);animation:spin 1s linear infinite}
+  .ai-orb::after{content:"";position:absolute;inset:6px;border-radius:50%;border:3px solid rgba(34,211,168,.12);border-bottom-color:var(--accent-2);animation:spin 1.6s linear infinite reverse}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ai-orb .emoji{font-size:46px;animation:orbPulse 1.4s ease-in-out infinite}
+  @keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+  #aiLoader h3{margin-top:26px;font-size:21px;font-weight:800}
+  #aiLoader .ai-sub{color:var(--muted);font-size:14px;margin-top:8px;min-height:20px;transition:opacity .2s}
+  .ai-dots::after{display:inline-block;width:1.2em;text-align:left;content:"";animation:aiDots 1.4s steps(1,end) infinite}
+  @keyframes aiDots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+  @media(prefers-reduced-motion:reduce){ .ai-orb::before,.ai-orb::after,.ai-orb .emoji{animation:none} }
+
   footer{text-align:center;color:var(--muted);font-size:13px;padding:40px 0 30px;margin-top:40px;border-top:1px solid var(--line)}
   .save-toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-100px);
     background:var(--accent);color:#04201a;font-weight:700;padding:12px 20px;border-radius:12px;
@@ -449,6 +468,12 @@
 
 <div class="save-toast" id="toast">✓ Progress saved</div>
 <div class="pr-toast" id="prToast">🎉 New PR!</div>
+
+<div id="aiLoader">
+  <div class="ai-orb"><span class="emoji">🍽️</span></div>
+  <h3>Analysing your meal<span class="ai-dots"></span></h3>
+  <div class="ai-sub" id="aiLoaderMsg">Looking at your plate…</div>
+</div>
 
 <div class="rest-timer" id="restTimer">
   <div>
@@ -1354,6 +1379,20 @@ async function callGemini(key, big){
   if(!est) throw new Error("AI replied in an unexpected format — enter values manually.");
   return est;
 }
+let aiMsgTimer=null;
+const AI_MSGS=["Looking at your plate…","Identifying the foods…","Estimating portion size…","Counting calories…","Calculating protein, carbs & fat…","Almost done…"];
+function showAiLoader(){
+  const el=document.getElementById("aiLoader"); if(!el) return;
+  const m=document.getElementById("aiLoaderMsg"); let i=0; if(m) m.textContent=AI_MSGS[0];
+  el.classList.add("show");
+  clearInterval(aiMsgTimer);
+  aiMsgTimer=setInterval(function(){ i=(i+1)%AI_MSGS.length; if(m) m.textContent=AI_MSGS[i]; }, 1600);
+}
+function hideAiLoader(){
+  const el=document.getElementById("aiLoader"); if(el) el.classList.remove("show");
+  clearInterval(aiMsgTimer); aiMsgTimer=null;
+}
+
 async function estimateFromPhoto(file, statusEl, prefill){
   let big, thumb;
   try{
@@ -1372,12 +1411,15 @@ async function estimateFromPhoto(file, statusEl, prefill){
   const isOpenAI = key.startsWith("sk-");
   const isGemini = !isOpenAI;
   statusEl.className="ai-status"; statusEl.textContent="🤖 Analysing your meal with "+(isGemini?"Gemini":"OpenAI")+"…";
+  showAiLoader();
   try{
     const est = isGemini ? await callGemini(key, big) : await callOpenAI(key, big);
     prefill.fill(est);
     statusEl.className="ai-status ok"; statusEl.textContent="✓ Estimated! Review the numbers and tap Add.";
   }catch(err){
     statusEl.className="ai-status err"; statusEl.textContent = (err && err.message) ? err.message : "Couldn't reach the AI — check your connection.";
+  }finally{
+    hideAiLoader();
   }
 }
 
