@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'none';
-               script-src 'self' 'unsafe-inline';
+               script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com;
                style-src 'self' 'unsafe-inline';
-               img-src 'self' data:;
+               img-src 'self' data: https://*.googleusercontent.com;
                font-src 'self';
-               connect-src https://api.openai.com https://generativelanguage.googleapis.com;
+               connect-src https://api.openai.com https://generativelanguage.googleapis.com https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://leanfit-662cc.firebaseapp.com;
+               frame-src https://leanfit-662cc.firebaseapp.com https://accounts.google.com https://apis.google.com;
                object-src 'none';
                base-uri 'none';
                form-action 'none';
@@ -673,6 +674,7 @@ function persist(){
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     localStorage.setItem(WEEK_KEY, String(currentWeek));
   }catch(e){/* storage full / blocked — ignore */}
+  if(window.__cloudPush) window.__cloudPush();
 }
 
 let state = loadState();
@@ -1212,7 +1214,7 @@ const MEALS_KEY="leanfit_meals_v1", TARGETS_KEY="leanfit_targets_v1",
       BODY_KEY="leanfit_body_v1", APIKEY_KEY="leanfit_openai_key_v1";
 
 function loadJSON(key, fb){ try{ const v=JSON.parse(localStorage.getItem(key)); return (v && typeof v==="object")? v : fb; }catch(e){ return fb; } }
-function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} if(window.__cloudPush) window.__cloudPush(); }
 
 /* Free offline food database — per typical serving {n:name, kcal, p, c, f} */
 const FOODS = [
@@ -1611,9 +1613,9 @@ function buildMeals(){
   const kbox=document.createElement("div"); kbox.className="keybox";
   const kInput=document.createElement("input"); kInput.type="password"; kInput.placeholder="Paste key — Gemini (AIza…/AQ.…, free) or OpenAI (sk-…)"; kInput.value=localStorage.getItem(APIKEY_KEY)||"";
   const kSave=document.createElement("button"); kSave.type="button"; kSave.className="btn"; kSave.textContent="Save key";
-  kSave.addEventListener("click",()=>{ const v=kInput.value.trim(); if(v) localStorage.setItem(APIKEY_KEY,v); else localStorage.removeItem(APIKEY_KEY); toast(); render(); });
+  kSave.addEventListener("click",()=>{ const v=kInput.value.trim(); if(v) localStorage.setItem(APIKEY_KEY,v); else localStorage.removeItem(APIKEY_KEY); if(window.__cloudPush) window.__cloudPush(); toast(); render(); });
   const kClear=document.createElement("button"); kClear.type="button"; kClear.className="btn alt"; kClear.textContent="Remove";
-  kClear.addEventListener("click",()=>{ localStorage.removeItem(APIKEY_KEY); kInput.value=""; toast(); render(); });
+  kClear.addEventListener("click",()=>{ localStorage.removeItem(APIKEY_KEY); kInput.value=""; if(window.__cloudPush) window.__cloudPush(); toast(); render(); });
   kbox.append(kInput,kSave,kClear);
   const links=document.createElement("p"); links.style.cssText="font-size:12px;margin-top:8px";
   const aG=document.createElement("a"); aG.href="https://aistudio.google.com/apikey"; aG.target="_blank"; aG.rel="noopener noreferrer"; aG.textContent="🆓 Get a free Gemini key →";
@@ -1752,6 +1754,20 @@ function buildGuide(){
       '<li><b>Water:</b> 3L+ per day.</li>'+
     '</ul></div>';
 
+  /* cloud sync */
+  const cloud=document.createElement("div"); cloud.className="panel"; cloud.style.marginTop="16px";
+  const ch=document.createElement("h3"); ch.textContent="☁️ Cloud Sync (all devices)"; cloud.appendChild(ch);
+  const cdesc=document.createElement("p"); cdesc.className="hint"; cdesc.style.marginBottom="10px";
+  cdesc.textContent="Sign in with Google to sync your workouts, meals, body log and AI key live across every device. Sign in once on each device.";
+  cloud.appendChild(cdesc);
+  const cBtn=document.createElement("button"); cBtn.id="syncBtn"; cBtn.type="button"; cBtn.className="btn";
+  cBtn.textContent = window.__cloudUser ? "Sign out" : "☁️ Sign in with Google";
+  cBtn.addEventListener("click", ()=>{ if(window.cloudToggle) window.cloudToggle(); else alert("Sync is still loading — try again in a second."); });
+  const cStat=document.createElement("div"); cStat.id="syncStatus"; cStat.className="hint"; cStat.style.marginTop="8px";
+  cStat.textContent = window.__cloudState || "Not signed in";
+  cloud.append(cBtn, cStat);
+  root.appendChild(cloud);
+
   /* backup tools live here now */
   const bk=document.createElement("div"); bk.className="panel"; bk.style.marginTop="16px";
   const bh=document.createElement("h3"); bh.textContent="💾 Back up your data"; bk.appendChild(bh);
@@ -1813,7 +1829,99 @@ document.getElementById("resetWeek").addEventListener("click", ()=>{
 document.getElementById("rtSkip").addEventListener("click", stopRest);
 document.getElementById("rtPlus").addEventListener("click", ()=>{ if(restEnd>Date.now()){ restEnd += 15000; tickRest(); } else { startRest(15); } });
 
+/* ===== Cloud-sync bridge (used by the Firebase module) ===== */
+window.__getSnapshot = function(){
+  return { state:state, meals:meals, body:body, targets:targets, aikey:(localStorage.getItem(APIKEY_KEY)||""), updatedAt:Date.now() };
+};
+window.__applySnapshot = function(d, replace){
+  if(!d || typeof d!=="object") return;
+  var cs={}; if(d.state && typeof d.state==="object"){ Object.keys(d.state).forEach(function(k){ sanitizeInto(cs,k,d.state[k]); }); }
+  state = replace ? cs : Object.assign({}, state, cs); persist();
+  var cm = (d.meals && typeof d.meals==="object") ? sanitizeMeals(d.meals) : {};
+  meals = replace ? cm : Object.assign({}, meals, cm); saveJSON(MEALS_KEY, meals);
+  var cb = (d.body && typeof d.body==="object") ? sanitizeBody(d.body) : {};
+  body = replace ? cb : Object.assign({}, body, cb); saveJSON(BODY_KEY, body);
+  if(d.targets){ var t=sanitizeTargets(d.targets); if(t){ targets=t; saveJSON(TARGETS_KEY, targets); } }
+  if(typeof d.aikey==="string" && d.aikey){ try{ localStorage.setItem(APIKEY_KEY, d.aikey); }catch(e){} }
+  render();
+};
+
 render();
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAnxtk-3Vze2QG2hpUB_bZq_fu3o51iZok",
+  authDomain: "leanfit-662cc.firebaseapp.com",
+  projectId: "leanfit-662cc",
+  storageBucket: "leanfit-662cc.firebasestorage.app",
+  messagingSenderId: "136103093876",
+  appId: "1:136103093876:web:a653f2c9015fc7d753d321"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let uid = null, unsub = null, pushTimer = null;
+window.__cloudState = "Not signed in";
+window.__cloudUser = null;
+
+function setStatus(s){
+  window.__cloudState = s;
+  const el = document.getElementById("syncStatus"); if(el) el.textContent = s;
+  const b = document.getElementById("syncBtn"); if(b) b.textContent = window.__cloudUser ? "Sign out" : "☁️ Sign in with Google";
+}
+function errText(e){ const c=(e&&e.code)?e.code:(e&&e.message)?e.message:String(e); return String(c).indexOf("permission")>=0 ? "Sync blocked — add the Firestore security rules (see chat)." : ("Sync error: "+c); }
+
+window.cloudToggle = function(){ if(window.__cloudUser) signOut(auth); else window.cloudSignIn(); };
+window.cloudSignIn = async function(){
+  setStatus("Opening Google sign-in…");
+  try { await signInWithPopup(auth, provider); }
+  catch(e){
+    const c=(e&&e.code)||"";
+    if(c.indexOf("popup")>=0 || c.indexOf("cancelled")>=0 || c.indexOf("not-supported")>=0 || c.indexOf("blocked")>=0){
+      try { await signInWithRedirect(auth, provider); } catch(e2){ setStatus("Sign-in failed: "+((e2&&e2.code)||e2)); }
+    } else { setStatus("Sign-in failed: "+c); }
+  }
+};
+getRedirectResult(auth).catch(function(){});
+
+window.__cloudPush = function(){
+  if(!uid || window.__applyingRemote) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(async function(){
+    try { await setDoc(doc(db,"users",uid), window.__getSnapshot()); setStatus("Synced ✓ "+new Date().toLocaleTimeString()); }
+    catch(e){ setStatus(errText(e)); }
+  }, 1200);
+};
+
+onAuthStateChanged(auth, async function(user){
+  if(unsub){ unsub(); unsub=null; }
+  if(!user){ uid=null; window.__cloudUser=null; setStatus("Not signed in"); return; }
+  uid = user.uid; window.__cloudUser = user.email || "signed in"; setStatus("Syncing…");
+  try {
+    const ref = doc(db,"users",uid);
+    const ds = await getDoc(ref);
+    if(ds.exists()){
+      window.__applyingRemote=true;
+      try { window.__applySnapshot(ds.data(), false); } finally { window.__applyingRemote=false; }
+    }
+    await setDoc(ref, window.__getSnapshot());           // push merged snapshot up
+    setStatus("Synced as "+(user.email||"you")+" ✓");
+    unsub = onSnapshot(ref, function(snap){
+      if(snap.metadata.hasPendingWrites || !snap.exists()) return;   // ignore our own writes
+      window.__applyingRemote=true;
+      try { window.__applySnapshot(snap.data(), true); } finally { window.__applyingRemote=false; }
+      setStatus("Synced ✓ "+new Date().toLocaleTimeString());
+    }, function(err){ setStatus(errText(err)); });
+  } catch(e){ setStatus(errText(e)); }
+});
 </script>
 </body>
 </html>
