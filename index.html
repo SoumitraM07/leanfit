@@ -49,8 +49,9 @@
   .daypills{display:flex;gap:8px;overflow-x:auto;padding:18px 0 12px;scrollbar-width:none}
   .daypills::-webkit-scrollbar{display:none}
   .pill{cursor:pointer;flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--txt);
-    border-radius:999px;padding:9px 15px;font-weight:600;font-size:13px;text-align:center;transition:.15s}
-  .pill small{display:block;color:var(--muted);font-size:11px;font-weight:500;margin-top:1px}
+    border-radius:14px;padding:8px 16px;text-align:center;transition:.15s;white-space:nowrap;min-width:78px}
+  .pill small{display:block;color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  .pill .pname{font-weight:700;font-size:14px;margin-top:2px}
   .pill:hover{border-color:var(--accent-2)}
   .pill.active{background:linear-gradient(135deg,rgba(34,211,168,.20),rgba(56,189,248,.16));border-color:var(--accent);color:#fff}
   .pill.active small{color:var(--accent)}
@@ -885,14 +886,15 @@ function importData(file){
 
 /* ===== Tabs ===== */
 function buildDayPills(){
+  const SHORT = { d1:"Push", d2:"Pull", d3:"Legs", d4:"Upper Body", d5:"Lower + Core" };
   const tabs = document.getElementById("tabs");
   tabs.replaceChildren();
   PROGRAM.forEach(d=>{
     const el = document.createElement("div");
     el.className = "pill" + (d.key===activeView ? " active" : "");
-    const t = document.createElement("div"); t.textContent = d.day.replace("Day ","D")+" · "+d.title;
-    const s = document.createElement("small"); s.textContent = d.focus.split(" • ")[0]+"…";
-    el.append(t, s);
+    const s = document.createElement("small"); s.textContent = d.day;            // "Day 1"
+    const t = document.createElement("div"); t.className="pname"; t.textContent = SHORT[d.key] || d.title; // "Push"
+    el.append(s, t);
     el.addEventListener("click", ()=>{ activeView = d.key; activeDay = d.key; render(); });
     tabs.appendChild(el);
   });
