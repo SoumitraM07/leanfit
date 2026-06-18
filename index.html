@@ -56,7 +56,13 @@
   .pill:hover{border-color:var(--accent-2)}
   .pill.active{background:linear-gradient(135deg,rgba(34,211,168,.20),rgba(56,189,248,.16));border-color:var(--accent);color:#fff}
   .pill.active small{color:var(--accent)}
-  @media(max-width:560px){ .nav button span{display:none} .nav button{font-size:17px;padding:8px 11px} .brand{font-size:17px} }
+  @media(max-width:560px){
+    .topbar-inner{gap:8px;padding:9px 12px}
+    .brand{font-size:15px}
+    .nav{gap:4px}
+    .nav button{font-size:12px;padding:6px 8px;gap:4px;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+    .nav button span{font-size:10px;font-weight:600}
+  }
 
   header{padding:54px 0 30px;text-align:center}
   .badge{display:inline-block;font-size:12px;letter-spacing:2px;text-transform:uppercase;
@@ -411,9 +417,9 @@
   <div class="wrap topbar-inner">
     <div class="brand">LeanFit&nbsp;<span>5</span></div>
     <nav class="nav" id="nav">
-      <button type="button" data-sec="train">🏋 <span>Train</span></button>
-      <button type="button" data-sec="progress">📊 <span>Progress</span></button>
-      <button type="button" data-sec="meals">🍽 <span>Meals</span></button>
+      <button type="button" data-sec="train">🏋️ <span>Train</span></button>
+      <button type="button" data-sec="progress">📈 <span>Progress</span></button>
+      <button type="button" data-sec="meals">🍴 <span>Meals</span></button>
       <button type="button" data-sec="guide">ℹ️ <span>Guide</span></button>
     </nav>
   </div>
@@ -1604,30 +1610,6 @@ function buildMeals(){
   const sgoal=document.createElement("span"); sgoal.style.cssText="font-size:12px;color:var(--muted)"; sgoal.textContent="target 7–9k";
   sc.append(stepIn,sgoal); stepRow.append(sn,sc); hp.appendChild(stepRow);
   root.appendChild(hp);
-
-  /* API key settings */
-  const keyWrap=document.createElement("details"); keyWrap.className="keywrap"; keyWrap.id="aiSettings";
-  const sum=document.createElement("summary"); sum.textContent="⚙️ AI photo settings (optional — a key is already built in)"; keyWrap.appendChild(sum);
-  const kp=document.createElement("p"); kp.style.cssText="font-size:13px;color:var(--accent);margin-bottom:4px";
-  kp.innerHTML="✓ AI photo counting is <b>ready on every device</b> — a Gemini key is built into the app, no setup needed.";
-  const kp2=document.createElement("p"); kp2.style.cssText="font-size:12px;color:var(--muted);margin-bottom:8px";
-  kp2.textContent="Optional: paste your own key below to use your own quota instead of the shared built-in one (OpenAI keys start with 'sk-'; Gemini keys start with 'AIza…' or 'AQ.…'). A personal key is stored only in this browser.";
-  const kbox=document.createElement("div"); kbox.className="keybox";
-  const kInput=document.createElement("input"); kInput.type="password"; kInput.placeholder="Paste key — Gemini (AIza…/AQ.…, free) or OpenAI (sk-…)"; kInput.value=localStorage.getItem(APIKEY_KEY)||"";
-  const kSave=document.createElement("button"); kSave.type="button"; kSave.className="btn"; kSave.textContent="Save key";
-  kSave.addEventListener("click",()=>{ const v=kInput.value.trim(); if(v) localStorage.setItem(APIKEY_KEY,v); else localStorage.removeItem(APIKEY_KEY); if(window.__cloudPush) window.__cloudPush(); toast(); render(); });
-  const kClear=document.createElement("button"); kClear.type="button"; kClear.className="btn alt"; kClear.textContent="Remove";
-  kClear.addEventListener("click",()=>{ localStorage.removeItem(APIKEY_KEY); kInput.value=""; if(window.__cloudPush) window.__cloudPush(); toast(); render(); });
-  kbox.append(kInput,kSave,kClear);
-  const links=document.createElement("p"); links.style.cssText="font-size:12px;margin-top:8px";
-  const aG=document.createElement("a"); aG.href="https://aistudio.google.com/apikey"; aG.target="_blank"; aG.rel="noopener noreferrer"; aG.textContent="🆓 Get a free Gemini key →";
-  const sep=document.createElement("span"); sep.style.color="var(--muted)"; sep.textContent="    ·    ";
-  const aO=document.createElement("a"); aO.href="https://platform.openai.com/api-keys"; aO.target="_blank"; aO.rel="noopener noreferrer"; aO.textContent="OpenAI key (paid)";
-  links.append(aG, sep, aO);
-  const steps=document.createElement("p"); steps.style.cssText="font-size:12px;color:var(--muted);margin-top:6px";
-  steps.textContent="Free Gemini steps: open the link → sign in with Google → 'Create API key' → copy → paste above → Save. Done!";
-  keyWrap.append(kp,kp2,kbox,links,steps);
-  root.appendChild(keyWrap);
 
   return root;
 }
