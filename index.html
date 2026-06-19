@@ -354,6 +354,25 @@
   @media(max-width:560px){ .enter-hint{display:none} }
   @media(prefers-reduced-motion:reduce){ .wave,.splash-bg::before,.splash-bg::after,.enter-btn{animation:none} .greet span,.tagline,.enter-hint{opacity:1;transform:none;animation:none} }
 
+  /* profile chooser */
+  #profileSelect{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:24px;overflow:auto;background-color:#0d1117;
+    background-image:radial-gradient(1100px 700px at 50% 22%,#16313a 0%,#0d1117 65%);transition:opacity .4s ease}
+  #profileSelect.gone{opacity:0;pointer-events:none}
+  .ps-inner{position:relative;z-index:2;max-width:680px;width:100%}
+  .ps-logo{font-weight:800;font-size:24px;letter-spacing:-1px;margin-bottom:8px}
+  .ps-logo span{background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .ps-title{font-size:clamp(23px,5vw,36px);font-weight:800;margin-bottom:26px}
+  .ps-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .ps-card{cursor:pointer;flex:1 1 210px;max-width:280px;display:flex;flex-direction:column;align-items:center;gap:8px;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 20px;color:var(--txt);transition:.18s}
+  .ps-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:var(--shadow)}
+  .ps-emoji{font-size:46px;line-height:1}
+  .ps-name{font-size:22px;font-weight:800}
+  .ps-sub{font-size:13px;color:var(--muted);font-style:italic}
+  .plannote{background:var(--bg-2);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.5}
+
   /* AI analysing loader (full screen) */
   #aiLoader{position:fixed;inset:0;z-index:9998;display:none;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:24px;background-color:#0d1117;
@@ -402,35 +421,36 @@
 </head>
 <body>
 
-<div id="splash">
+<div id="profileSelect">
+  <div class="splash-bg"></div>
+  <div class="ps-inner">
+    <div class="ps-logo">Fit<span>Forge</span></div>
+    <h1 class="ps-title">Who’s training today?</h1>
+    <div class="ps-cards">
+      <button type="button" class="ps-card" data-profile="soumitra">
+        <span class="ps-emoji">🏋️</span>
+        <span class="ps-name">Soumitra</span>
+        <span class="ps-sub">“Discipline beats motivation.”</span>
+      </button>
+      <button type="button" class="ps-card" data-profile="riya">
+        <span class="ps-emoji">🌸</span>
+        <span class="ps-name">Riya</span>
+        <span class="ps-sub">“Every expert was once a beginner.”</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="splash" style="display:none">
   <div class="splash-bg"></div>
   <div class="splash-inner">
     <div class="wave">👋</div>
-    <h1 class="greet"><span>Hello</span> <span>Soumitra</span></h1>
-    <p class="tagline">Let’s start the workout for today 💪</p>
+    <h1 class="greet"><span>Hello</span> <span id="greetName">Soumitra</span></h1>
+    <p class="tagline" id="splashTag">Let’s start the workout for today 💪</p>
     <button id="enterBtn" type="button" class="enter-btn">Let’s go →</button>
     <div class="enter-hint">press <kbd>Enter</kbd> to begin</div>
   </div>
 </div>
-<script>
-(function(){
-  var s=document.getElementById("splash"); if(!s) return;
-  var root=document.documentElement;
-  root.classList.add("splash-lock"); document.body && document.body.classList.add("splash-lock");
-  var done=false;
-  function go(){
-    if(done) return; done=true;
-    s.classList.add("gone");
-    root.classList.remove("splash-lock"); document.body && document.body.classList.remove("splash-lock");
-    setTimeout(function(){ s.style.display="none"; }, 520);
-    document.removeEventListener("keydown", onKey);
-  }
-  function onKey(e){ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); go(); } }
-  document.addEventListener("keydown", onKey);
-  var b=document.getElementById("enterBtn"); if(b) b.addEventListener("click", go);
-  s.addEventListener("click", go);
-})();
-</script>
 
 <header class="topbar">
   <div class="wrap topbar-inner">
@@ -455,6 +475,7 @@
       </div>
       <button class="ghost" id="resetWeek">Reset week</button>
     </div>
+    <div id="planNote"></div>
   </div>
 
   <div id="views"></div>
@@ -493,6 +514,20 @@ const V = {
   warmup_lower:"https://www.youtube.com/watch?v=DgjiFOKWsfg",
   warmup_full:"https://www.youtube.com/watch?v=T7Mk9KBuhAU",
   warmup_sets:"https://www.youtube.com/watch?v=LlVbcoD3eoQ",
+  riya_pelvic_floor:"https://www.youtube.com/watch?v=kQKR5uLkeUM",
+  riya_bird_dog:"https://www.youtube.com/watch?v=KA0ekfSePrQ",
+  riya_clamshell:"https://www.youtube.com/watch?v=vsQugiJgZZE",
+  riya_dead_bug:"https://www.youtube.com/watch?v=GbSC02oU3To",
+  riya_glute_bridge:"https://www.youtube.com/watch?v=wPM8icPu6H8",
+  riya_step_up:"https://www.youtube.com/watch?v=WCFCdxzFBa4",
+  riya_walk:"https://www.youtube.com/watch?v=rMxxdKTlB18",
+  riya_cat_cow:"https://www.youtube.com/watch?v=rpRnIsavO4k",
+  riya_stretch:"https://www.youtube.com/watch?v=IlHgLYdt3kc",
+  riya_bw_squat:"https://www.youtube.com/watch?v=P-yaD24bUE8",
+  riya_wall_pushup:"https://www.youtube.com/shorts/YWw-3rGaoT0",
+  riya_hip_mobility:"https://www.youtube.com/watch?v=uxp5xb7Sdo8",
+  riya_knee_pushup:"https://www.youtube.com/watch?v=lFR1GWy1Dcs",
+  riya_marching:"https://www.youtube.com/watch?v=UWs5cMCTLj4",
   incline_db_press:"https://www.youtube.com/watch?v=8iPEnn-ltC8",
   flat_db_press:"https://www.youtube.com/watch?v=VmB1G1K7v94",
   seated_db_shoulder_press:"https://www.youtube.com/watch?v=qEwKCR5JCog",
@@ -524,7 +559,7 @@ const V = {
 };
 
 /* ===== Program ===== */
-const PROGRAM = [
+const PROGRAM_SOUMITRA = [
   {
     key:"d1", day:"Day 1", title:"Push", focus:"Chest • Shoulders • Triceps",
     sub:"Pressing power. Controlled tempo (2s down, 1s up), then a fat-loss finisher.",
@@ -624,12 +659,87 @@ const PROGRAM = [
   }
 ];
 
+/* ===== Riya — beginner woman (29), first time in a gym, only walked before.
+   Early focus: cardio, strength foundations, mobility, and pelvic/reproductive health;
+   woman-centric glute & lower-body work; progresses gently. ===== */
+const PROGRAM_RIYA = [
+  {
+    key:"d1", day:"Day 1", title:"Full-Body Foundations", focus:"Strength • Beginner • Form",
+    sub:"Gentle full-body strength with bodyweight & light weights. Focus on learning the movements — never rush.",
+    warmup:{ video:V.warmup_full, intro:"5 min gentle full-body mobility to wake everything up.",
+      drills:[ {n:"March in place", d:"1 min"}, {n:"Arm circles", d:"30s each way"}, {n:"Cat-cow", d:"8 slow reps"}, {n:"Bodyweight squats (easy)", d:"8 reps"}, {n:"Glute bridges", d:"10 reps"} ]},
+    exercises:[
+      {name:"Bodyweight Squat", warmupSets:0, sets:3, reps:"10", rest:"60s", target:"Legs / Glutes", cue:"Chest up, sit back like onto a chair, go only as low as comfortable.", vid:V.riya_bw_squat},
+      {name:"Glute Bridge", warmupSets:0, sets:3, reps:"12", rest:"45s", target:"Glutes", cue:"Drive through heels, squeeze glutes at the top, don't arch the back.", vid:V.riya_glute_bridge},
+      {name:"Wall / Incline Push-up", warmupSets:0, sets:3, reps:"8-10", rest:"60s", target:"Chest / Arms", cue:"Hands on a wall or bench; body straight, lower with control.", vid:V.riya_wall_pushup},
+      {name:"Seated Cable Row (light)", warmupSets:0, sets:3, reps:"12", rest:"60s", target:"Back / Posture", cue:"Light weight, sit tall, squeeze shoulder blades, no jerking.", vid:V.seated_cable_row},
+      {name:"Dead Bug", warmupSets:0, sets:3, reps:"8 / side", rest:"45s", target:"Deep Core", cue:"Lower back stays gently pressed down, move slowly.", vid:V.riya_dead_bug},
+      {name:"Finisher: Easy Walk", warmupSets:0, sets:1, reps:"10 min", rest:"—", target:"Cardio", cue:"Comfortable pace — you should be able to chat.", vid:V.riya_walk}
+    ]
+  },
+  {
+    key:"d2", day:"Day 2", title:"Cardio + Mobility", focus:"Low-impact cardio • Mobility",
+    sub:"Build your cardio base gently and keep joints mobile. All low-impact and beginner-friendly.",
+    warmup:{ video:V.warmup_lower, intro:"5 min gentle mobility before moving.",
+      drills:[ {n:"Ankle circles", d:"10 / side"}, {n:"Leg swings", d:"8 / side"}, {n:"Hip circles", d:"8 / side"}, {n:"March in place", d:"1 min"} ]},
+    exercises:[
+      {name:"Brisk / Incline Walk", warmupSets:0, sets:1, reps:"20 min", rest:"—", target:"Cardio", cue:"Treadmill or outdoors. Brisk but comfortable; add a slight incline if easy.", vid:V.riya_walk},
+      {name:"Low-Impact Marching Cardio", warmupSets:0, sets:3, reps:"2 min", rest:"60s", target:"Cardio", cue:"Knees up, arms moving, stay light on your feet.", vid:V.riya_marching},
+      {name:"Step-ups (low step)", warmupSets:0, sets:3, reps:"10 / leg", rest:"60s", target:"Legs / Cardio", cue:"Use a low, stable step; whole foot on the step, stand tall.", vid:V.riya_step_up},
+      {name:"Cat-Cow", warmupSets:0, sets:2, reps:"8", rest:"30s", target:"Spine Mobility", cue:"Move slowly with your breath.", vid:V.riya_cat_cow},
+      {name:"Full-Body Stretch", warmupSets:0, sets:1, reps:"5 min", rest:"—", target:"Mobility", cue:"Gentle cooldown stretches, never bounce.", vid:V.riya_stretch}
+    ]
+  },
+  {
+    key:"d3", day:"Day 3", title:"Core & Women's Health", focus:"Pelvic floor • Core • Hip mobility",
+    sub:"A women-centric session: pelvic-floor strength, deep core, and hip/reproductive-area mobility.",
+    warmup:{ video:V.warmup_lower, intro:"Gentle hips & lower-back mobility to begin.",
+      drills:[ {n:"Cat-cow", d:"8 reps"}, {n:"Hip circles", d:"8 / side"}, {n:"Knee hugs", d:"8 / side"}, {n:"Child's pose", d:"30s"} ]},
+    exercises:[
+      {name:"Pelvic Floor / Kegels", warmupSets:0, sets:3, reps:"10 slow holds", rest:"45s", target:"Pelvic Floor", cue:"Gently lift & squeeze (like stopping urine), hold 3–5s, then fully relax. Breathe normally.", vid:V.riya_pelvic_floor},
+      {name:"Glute Bridge", warmupSets:0, sets:3, reps:"12", rest:"45s", target:"Glutes / Pelvis", cue:"Exhale and lift, squeeze glutes & gently engage pelvic floor.", vid:V.riya_glute_bridge},
+      {name:"Bird Dog", warmupSets:0, sets:3, reps:"8 / side", rest:"45s", target:"Core / Back", cue:"Opposite arm & leg, keep hips level, move slowly.", vid:V.riya_bird_dog},
+      {name:"Dead Bug", warmupSets:0, sets:3, reps:"8 / side", rest:"45s", target:"Deep Core", cue:"Slow and controlled, low back stays down.", vid:V.riya_dead_bug},
+      {name:"Clamshell", warmupSets:0, sets:3, reps:"12 / side", rest:"30s", target:"Hips / Glutes", cue:"On your side, knees bent, open top knee without rolling hips back.", vid:V.riya_clamshell},
+      {name:"Hip Mobility Flow", warmupSets:0, sets:1, reps:"6 min", rest:"—", target:"Hip Mobility", cue:"Great for hip & pelvic health — move gently through the range.", vid:V.riya_hip_mobility}
+    ]
+  },
+  {
+    key:"d4", day:"Day 4", title:"Lower Body & Glutes", focus:"Glutes • Legs • Woman-centric",
+    sub:"Beginner glute & lower-body strength — builds shape, strength and everyday confidence.",
+    warmup:{ video:V.warmup_lower, intro:"Warm up hips, knees and glutes first.",
+      drills:[ {n:"Bodyweight squats", d:"10 reps"}, {n:"Glute bridges", d:"12 reps"}, {n:"Leg swings", d:"8 / side"}, {n:"Clamshells", d:"10 / side"} ]},
+    exercises:[
+      {name:"Goblet Squat (light)", warmupSets:1, sets:3, reps:"10", rest:"60s", target:"Legs / Glutes", cue:"Hold a light dumbbell at your chest, sit back and down, chest tall.", vid:V.goblet_squat},
+      {name:"Glute Bridge / Hip Thrust", warmupSets:0, sets:3, reps:"12", rest:"60s", target:"Glutes", cue:"Drive through heels, full squeeze at the top.", vid:V.db_hip_thrust},
+      {name:"Step-ups (low step)", warmupSets:0, sets:3, reps:"10 / leg", rest:"60s", target:"Legs / Glutes", cue:"Stand tall on top, control the way down.", vid:V.riya_step_up},
+      {name:"Romanian Deadlift (light)", warmupSets:0, sets:3, reps:"10", rest:"60s", target:"Hamstrings / Glutes", cue:"Light weights, soft knees, push hips back, flat back.", vid:V.db_romanian_deadlift},
+      {name:"Standing Calf Raise", warmupSets:0, sets:3, reps:"15", rest:"30s", target:"Calves", cue:"Rise onto toes, pause, lower slowly.", vid:V.standing_calf_raise},
+      {name:"Finisher: Walk", warmupSets:0, sets:1, reps:"8 min", rest:"—", target:"Cardio", cue:"Easy cooldown walk.", vid:V.riya_walk}
+    ]
+  },
+  {
+    key:"d5", day:"Day 5", title:"Cardio + Stretch & Recovery", focus:"Cardio • Pelvic floor • Stretch",
+    sub:"An easy, restorative day — cardio, a little core/pelvic work, and a full relaxing stretch.",
+    warmup:{ video:V.warmup_full, intro:"Gentle full-body warm-up to get moving.",
+      drills:[ {n:"March in place", d:"1 min"}, {n:"Arm circles", d:"30s each way"}, {n:"Cat-cow", d:"8 reps"} ]},
+    exercises:[
+      {name:"Brisk Walk (longer)", warmupSets:0, sets:1, reps:"25 min", rest:"—", target:"Cardio", cue:"Steady comfortable pace; enjoy it.", vid:V.riya_walk},
+      {name:"Pelvic Floor / Kegels", warmupSets:0, sets:2, reps:"10 slow holds", rest:"45s", target:"Pelvic Floor", cue:"Lift, hold, fully relax — quality over quantity.", vid:V.riya_pelvic_floor},
+      {name:"Bird Dog", warmupSets:0, sets:2, reps:"8 / side", rest:"45s", target:"Core / Back", cue:"Slow and steady, hips level.", vid:V.riya_bird_dog},
+      {name:"Full-Body Stretch", warmupSets:0, sets:1, reps:"8 min", rest:"—", target:"Mobility / Recovery", cue:"Deep, relaxing stretches — breathe and unwind.", vid:V.riya_stretch}
+    ]
+  }
+];
+
+let PROGRAM = PROGRAM_SOUMITRA;
+
 const MAX_WEEK = 12;
 
 /* ===== Suggested starting loads (conservative, for a returning lifter — Week 1) =====
    These are starting points. Pick a weight where the LAST 2 working reps feel
    challenging but you keep good form, then add a little each week. */
-const SUGGEST = {
+const SUGGEST_SOUMITRA = {
   "Incline Dumbbell Press":"5-7 kg/hand",
   "Flat Dumbbell Chest Press":"6-8 kg/hand",
   "Seated Dumbbell Shoulder Press":"4-5 kg/hand",
@@ -664,9 +774,58 @@ const SUGGEST = {
   "HIIT Finisher (Bike/Run intervals)":"Bodyweight"
 };
 
+const SUGGEST_RIYA = {
+  "Bodyweight Squat":"Bodyweight",
+  "Glute Bridge":"Bodyweight",
+  "Wall / Incline Push-up":"Bodyweight",
+  "Seated Cable Row (light)":"10-15 kg",
+  "Dead Bug":"Bodyweight",
+  "Finisher: Easy Walk":"Bodyweight",
+  "Brisk / Incline Walk":"Bodyweight",
+  "Low-Impact Marching Cardio":"Bodyweight",
+  "Step-ups (low step)":"BW or low step",
+  "Cat-Cow":"Bodyweight",
+  "Full-Body Stretch":"Bodyweight",
+  "Pelvic Floor / Kegels":"Bodyweight",
+  "Bird Dog":"Bodyweight",
+  "Clamshell":"BW or band",
+  "Hip Mobility Flow":"Bodyweight",
+  "Goblet Squat (light)":"4-6 kg",
+  "Glute Bridge / Hip Thrust":"BW or 5-10 kg",
+  "Romanian Deadlift (light)":"4-6 kg/hand",
+  "Standing Calf Raise":"Bodyweight",
+  "Finisher: Walk":"Bodyweight",
+  "Brisk Walk (longer)":"Bodyweight"
+};
+
+let SUGGEST = SUGGEST_SOUMITRA;
+
+/* ===== Riya progression: phases over the 12 weeks =====
+   Phase 1 (wk 1-2): 3 days (D1/D3/D4), bodyweight — foundation.
+   Phase 2 (wk 3-4): all 5 days, still light.
+   Phase 3 (wk 5-8): weight training begins.
+   Phase 4 (wk 9-12): keep progressing. */
+function phaseIndex(week){ if(week<=2) return 0; if(week<=4) return 1; if(week<=8) return 2; return 3; }
+function riyaActiveDays(week){ return (week<=2) ? ["d1","d3","d4"] : ["d1","d2","d3","d4","d5"]; }
+/* Week-based load progression for Riya's weighted/scalable moves (index = phase) */
+const RIYA_PROGRESSION = {
+  "Goblet Squat (light)":      ["BW or 2-3 kg", "3-4 kg",       "5-7 kg",        "8-10 kg"],
+  "Glute Bridge / Hip Thrust": ["Bodyweight",   "BW or 4 kg",   "5-10 kg",       "10-15 kg"],
+  "Romanian Deadlift (light)": ["Very light",   "3-4 kg/hand",  "5-6 kg/hand",   "6-8 kg/hand"],
+  "Seated Cable Row (light)":  ["5-10 kg",      "10-12 kg",     "12-15 kg",      "15-20 kg"],
+  "Step-ups (low step)":       ["Bodyweight",   "Bodyweight",   "Hold 2-4 kg",   "Hold 4-6 kg"],
+  "Standing Calf Raise":       ["Bodyweight",   "Bodyweight",   "BW or 5-10 kg", "10-15 kg"],
+  "Wall / Incline Push-up":    ["Wall / high incline", "Lower incline", "Knees / low incline", "Knees → full"]
+};
+/* Suggestion for an exercise — week-aware for Riya, static otherwise */
+function getSuggest(name){
+  if(profile==="riya" && RIYA_PROGRESSION[name]) return RIYA_PROGRESSION[name][phaseIndex(currentWeek)];
+  return SUGGEST[name] || "";
+}
+
 /* ===== Secure storage (validated, typed) ===== */
-const STORE_KEY = "leanfit_progress_v2";
-const WEEK_KEY  = "leanfit_week_v2";
+let STORE_KEY = "leanfit_soumitra_progress_v2";
+let WEEK_KEY  = "leanfit_soumitra_week_v2";
 const SET_RE = /^w([1-9]|1[0-2])_d[1-5]_e\d{1,2}_[wu]\d{1,2}_(w|r|c)$/;
 const MOB_RE = /^w([1-9]|1[0-2])_d[1-5]_m\d{1,2}_c$/;
 const FIN_RE = /^w([1-9]|1[0-2])_d[1-5]_fin$/;
@@ -706,8 +865,9 @@ function persist(){
   if(window.__cloudPush) window.__cloudPush();
 }
 
-let state = loadState();
-let currentWeek = loadWeek();
+let profile = null;
+let state = {};
+let currentWeek = 1;
 let activeView = "d1";
 let activeDay = "d1";
 
@@ -917,10 +1077,13 @@ function importData(file){
 
 /* ===== Tabs ===== */
 function buildDayPills(){
-  const SHORT = { d1:"Push", d2:"Pull", d3:"Legs", d4:"Upper Body", d5:"Lower + Core" };
+  const SHORT = (profile==="riya")
+    ? { d1:"Foundations", d2:"Cardio", d3:"Core & Health", d4:"Glutes & Legs", d5:"Cardio + Stretch" }
+    : { d1:"Push", d2:"Pull", d3:"Legs", d4:"Upper Body", d5:"Lower + Core" };
   const tabs = document.getElementById("tabs");
   tabs.replaceChildren();
-  PROGRAM.forEach(d=>{
+  const days = (profile==="riya") ? PROGRAM.filter(d=> riyaActiveDays(currentWeek).indexOf(d.key)>=0) : PROGRAM;
+  days.forEach(d=>{
     const el = document.createElement("div");
     el.className = "pill" + (d.key===activeView ? " active" : "");
     const s = document.createElement("small"); s.textContent = d.day;            // "Day 1"
@@ -929,6 +1092,21 @@ function buildDayPills(){
     el.addEventListener("click", ()=>{ activeView = d.key; activeDay = d.key; render(); });
     tabs.appendChild(el);
   });
+}
+function renderPlanNote(){
+  const el = document.getElementById("planNote"); if(!el) return;
+  el.replaceChildren();
+  if(profile!=="riya") return;
+  const notes = [
+    {c:"#22d3a8", t:"🌱 Phase 1 · Weeks 1–2 — Foundation. Train 3 days (Day 1, 3 & 4), bodyweight & very light. Focus on form."},
+    {c:"#38bdf8", t:"🚶‍♀️ Phase 2 · Weeks 3–4 — All 5 days now. Keep it light; add a touch of weight only where it feels easy."},
+    {c:"#fbbf24", t:"💪 Phase 3 · Weeks 5–8 — Weight training begins. Use light dumbbells/machines, add a little each week."},
+    {c:"#a78bfa", t:"🏆 Phase 4 · Weeks 9–12 — Keep progressing with steady, small increases. You've built a strong base!"}
+  ];
+  const n = notes[phaseIndex(currentWeek)];
+  const box = document.createElement("div"); box.className="plannote"; box.style.borderLeftColor=n.c;
+  box.textContent = n.t;
+  el.appendChild(box);
 }
 function buildNav(){
   const section = activeView.startsWith("d") ? "train" : activeView;
@@ -1057,7 +1235,7 @@ function buildDay(d){
     const nm = document.createElement("div"); nm.className="ex-name"; nm.textContent = (ei+1)+". "+ex.name;
     const meta = document.createElement("div"); meta.className="ex-meta";
     const chip = (label,val,cls)=>{ const c=document.createElement("span"); c.className="chip"+(cls?" "+cls:""); c.append(txt(label+" ")); const b=document.createElement("b"); b.textContent=val; c.appendChild(b); return c; };
-    const sug = SUGGEST[ex.name] || "";
+    const sug = getSuggest(ex.name);
     meta.appendChild(chip("🎯", ex.target));
     if(ex.warmupSets>0) meta.appendChild(chip("Warm-up sets", String(ex.warmupSets), "warm"));
     meta.appendChild(chip("Work sets", String(ex.sets)));
@@ -1239,8 +1417,8 @@ function buildProgress(){
 /* =====================================================================
    MEALS · NUTRITION · BODY LOG · PERSONAL RECORDS
    ===================================================================== */
-const MEALS_KEY="leanfit_meals_v1", TARGETS_KEY="leanfit_targets_v1",
-      BODY_KEY="leanfit_body_v1", APIKEY_KEY="leanfit_openai_key_v1";
+let MEALS_KEY="leanfit_soumitra_meals_v1", TARGETS_KEY="leanfit_soumitra_targets_v1",
+    BODY_KEY="leanfit_soumitra_body_v1", APIKEY_KEY="leanfit_soumitra_openai_key_v1";
 /* Built-in Gemini key so AI photo counting works on every device with no setup.
    (Free-tier auth key, scoped to the Gemini API only — cannot incur charges.)
    Stored base64-encoded so automated scanners don't flag/auto-revoke it. */
@@ -1297,9 +1475,9 @@ const MEAL_TYPES=[
 const MEAL_KEYS=MEAL_TYPES.map(m=>m.k);
 function defaultMealType(){ const h=new Date().getHours(); if(h<11) return "breakfast"; if(h<16) return "lunch"; if(h<19) return "snack"; return "dinner"; }
 
-let meals   = loadJSON(MEALS_KEY, {});                         // { "YYYY-MM-DD": {items:[...], water:0, steps:0} }
-let targets = loadJSON(TARGETS_KEY, {kcal:1800, protein:110});
-let body    = loadJSON(BODY_KEY, {});                          // { "YYYY-MM-DD": {weight, waist} }
+let meals   = {};   // { "YYYY-MM-DD": {items:[...], water:0, steps:0} }
+let targets = {kcal:1800, protein:110};
+let body    = {};   // { "YYYY-MM-DD": {weight, waist} }
 let mealDate = todayStr();
 
 function num(v){ const n=Number(v); return Number.isFinite(n)&&n>=0 ? n : 0; }
@@ -1773,27 +1951,51 @@ function buildGuide(){
   const root=document.createElement("div");
   root.className="view"+(activeView==="guide"?" active":"");
   root.dataset.day="guide";
-  root.innerHTML =
-    '<div class="day-head"><h2>ℹ️ Your Guide</h2></div>'+
-    '<p class="day-sub">Everything about how the plan works — kept here so your tracker stays clean. Start date: <b>Monday, 22 Jan</b>.</p>'+
-    '<div class="stats">'+
-      '<div class="stat"><div class="n">5</div><div class="l">Days / Week</div></div>'+
-      '<div class="stat"><div class="n">55-70</div><div class="l">Min / Session</div></div>'+
-      '<div class="stat"><div class="n">8-15</div><div class="l">Working Reps</div></div>'+
-      '<div class="stat"><div class="n">12</div><div class="l">Week Plan</div></div>'+
-    '</div>'+
-    '<div class="grid" style="margin-top:16px">'+
-      '<div class="pcard"><h3><span class="dot"></span> Always Warm Up First</h3><p>Do the day\u2019s mobility drills, then 1\u20132 light warm-up sets on big lifts (~50\u201360% of working weight). Non-negotiable after a 2-year break.</p></div>'+
-      '<div class="pcard"><h3><span class="dot"></span> Progressive Overload</h3><p>Each week add a small rep or a little weight to lifts you did comfortably. The Progress tab shows your volume climbing.</p></div>'+
-      '<div class="pcard"><h3><span class="dot"></span> Lean, Not Bulky</h3><p>Higher reps (8\u201315), controlled tempo, short rest (45\u201375s). We chase definition, not size.</p></div>'+
-      '<div class="pcard"><h3><span class="dot"></span> Fat Loss Engine</h3><p>A short conditioning finisher each day + 7\u20139k daily steps + a slight calorie deficit (~300\u2013400 kcal).</p></div>'+
-    '</div>'+
-    '<div class="note"><h3>\uD83E\uDD57 Nutrition Quick-Guide</h3><ul>'+
-      '<li><b>Protein:</b> ~1.6\u20132.0 g per kg bodyweight daily.</li>'+
-      '<li><b>Slight deficit:</b> ~300\u2013400 kcal below maintenance.</li>'+
-      '<li><b>Carbs around training</b> for energy &amp; recovery.</li>'+
-      '<li><b>Water:</b> 3L+ per day.</li>'+
-    '</ul></div>';
+  if(profile==="riya"){
+    root.innerHTML =
+      '<div class="day-head"><h2>ℹ️ Riya\u2019s Guide</h2></div>'+
+      '<p class="day-sub">A gentle, beginner-friendly start to the gym — built for your first weeks: cardio, strength foundations, mobility, and women\u2019s pelvic-floor health.</p>'+
+      '<div class="stats">'+
+        '<div class="stat"><div class="n">3→5</div><div class="l">Days / Week</div></div>'+
+        '<div class="stat"><div class="n">30-45</div><div class="l">Min / Session</div></div>'+
+        '<div class="stat"><div class="n">10-15</div><div class="l">Reps</div></div>'+
+        '<div class="stat"><div class="n">12</div><div class="l">Week Plan</div></div>'+
+      '</div>'+
+      '<div class="grid" style="margin-top:16px">'+
+        '<div class="pcard"><h3><span class="dot"></span> Start Gentle</h3><p>You\u2019ve mainly walked before — a great base! We begin light with bodyweight & machines and focus on form. Never rush or push to pain.</p></div>'+
+        '<div class="pcard"><h3><span class="dot"></span> Move Often</h3><p>Plenty of walking-based cardio and mobility to build the habit, boost energy and protect your joints.</p></div>'+
+        '<div class="pcard"><h3><span class="dot"></span> Women\u2019s Core & Pelvic Health</h3><p>Dedicated pelvic-floor and hip-mobility work supports deep core strength, posture and reproductive-area health.</p></div>'+
+        '<div class="pcard"><h3><span class="dot"></span> Phased Progression</h3><p>Weeks 1–2: 3 days, bodyweight foundation. Weeks 3–4: all 5 days. Weeks 5+: weight training added — the banner above your workout tells you each phase.</p></div>'+
+      '</div>'+
+      '<div class="note"><h3>\uD83E\uDD57 Nutrition Quick-Guide</h3><ul>'+
+        '<li><b>Protein:</b> ~1.4\u20131.8 g per kg bodyweight daily (dal, paneer, eggs, curd, chicken/fish).</li>'+
+        '<li><b>Balanced plate:</b> protein + veggies + whole-grain carbs at each meal.</li>'+
+        '<li><b>Hydrate:</b> 2.5\u20133L water per day.</li>'+
+        '<li><b>Gentle deficit</b> only if fat loss is a goal — don\u2019t crash diet while building the habit.</li>'+
+      '</ul></div>';
+  } else {
+    root.innerHTML =
+      '<div class="day-head"><h2>ℹ️ Your Guide</h2></div>'+
+      '<p class="day-sub">Everything about how the plan works — kept here so your tracker stays clean. Start date: <b>Monday, 22 Jan</b>.</p>'+
+      '<div class="stats">'+
+        '<div class="stat"><div class="n">5</div><div class="l">Days / Week</div></div>'+
+        '<div class="stat"><div class="n">55-70</div><div class="l">Min / Session</div></div>'+
+        '<div class="stat"><div class="n">8-15</div><div class="l">Working Reps</div></div>'+
+        '<div class="stat"><div class="n">12</div><div class="l">Week Plan</div></div>'+
+      '</div>'+
+      '<div class="grid" style="margin-top:16px">'+
+        '<div class="pcard"><h3><span class="dot"></span> Always Warm Up First</h3><p>Do the day\u2019s mobility drills, then 1\u20132 light warm-up sets on big lifts (~50\u201360% of working weight). Non-negotiable after a 2-year break.</p></div>'+
+        '<div class="pcard"><h3><span class="dot"></span> Progressive Overload</h3><p>Each week add a small rep or a little weight to lifts you did comfortably. The Progress tab shows your volume climbing.</p></div>'+
+        '<div class="pcard"><h3><span class="dot"></span> Lean, Not Bulky</h3><p>Higher reps (8\u201315), controlled tempo, short rest (45\u201375s). We chase definition, not size.</p></div>'+
+        '<div class="pcard"><h3><span class="dot"></span> Fat Loss Engine</h3><p>A short conditioning finisher each day + 7\u20139k daily steps + a slight calorie deficit (~300\u2013400 kcal).</p></div>'+
+      '</div>'+
+      '<div class="note"><h3>\uD83E\uDD57 Nutrition Quick-Guide</h3><ul>'+
+        '<li><b>Protein:</b> ~1.6\u20132.0 g per kg bodyweight daily.</li>'+
+        '<li><b>Slight deficit:</b> ~300\u2013400 kcal below maintenance.</li>'+
+        '<li><b>Carbs around training</b> for energy &amp; recovery.</li>'+
+        '<li><b>Water:</b> 3L+ per day.</li>'+
+      '</ul></div>';
+  }
 
   /* cloud sync */
   const cloud=document.createElement("div"); cloud.className="panel"; cloud.style.marginTop="16px";
@@ -1826,6 +2028,17 @@ function buildGuide(){
   bk.appendChild(row);
   root.appendChild(bk);
 
+  /* switch profile */
+  const sw=document.createElement("div"); sw.className="panel"; sw.style.marginTop="16px";
+  const swh=document.createElement("h3"); swh.textContent="👤 Profile"; sw.appendChild(swh);
+  const swp=document.createElement("p"); swp.className="hint"; swp.style.marginBottom="10px";
+  swp.textContent = "Currently training as "+(profile==="riya"?"Riya":"Soumitra")+". Switch to the other profile (each has its own plan & data).";
+  sw.appendChild(swp);
+  const swBtn=document.createElement("button"); swBtn.type="button"; swBtn.className="btn alt"; swBtn.textContent="🔄 Switch profile";
+  swBtn.addEventListener("click", ()=>{ location.reload(); });
+  sw.appendChild(swBtn);
+  root.appendChild(sw);
+
   const dis=document.createElement("p"); dis.className="hint"; dis.style.marginTop="16px";
   dis.textContent="General fitness plan. If you have any medical condition or pain, consult a doctor first.";
   root.appendChild(dis);
@@ -1834,9 +2047,14 @@ function buildGuide(){
 
 /* ===== Render ===== */
 function render(){
+  if(profile==="riya" && activeView.charAt(0)==="d"){
+    const act = riyaActiveDays(currentWeek);
+    if(act.indexOf(activeView)<0){ activeView = act[0]; activeDay = act[0]; }
+  }
   document.getElementById("wkLabel").textContent = "Week "+currentWeek;
   buildNav();
   buildDayPills();
+  renderPlanNote();
   const host = document.getElementById("views");
   host.replaceChildren();
   PROGRAM.forEach(d=> host.appendChild(buildDay(d)));
@@ -1887,7 +2105,7 @@ window.__applySnapshot = function(d, replace){
 };
 
 /* ===== Apple Health / Shortcuts bridge: ?steps=NN&weight=NN logs to today ===== */
-(function importHealthParams(){
+function importHealthParams(){
   try{
     const p = new URLSearchParams(location.search);
     let msg = "";
@@ -1897,12 +2115,64 @@ window.__applySnapshot = function(d, replace){
     if(w!==null){ const wn=Number(w); if(Number.isFinite(wn) && wn>0 && wn<=500){ if(!body[todayStr()]) body[todayStr()]={}; body[todayStr()].weight=Math.round(wn*10)/10; saveJSON(BODY_KEY, body); msg = msg ? msg+" & weight" : "✓ Synced weight from Health"; } }
     if(msg){
       history.replaceState(null, "", location.pathname);
-      setTimeout(function(){ const t=document.getElementById("toast"); if(t){ t.textContent=msg; t.classList.add("show"); setTimeout(function(){ t.classList.remove("show"); t.textContent="✓ Progress saved"; }, 2200); } }, 400);
+      setTimeout(function(){ const t=document.getElementById("toast"); if(t){ t.textContent=msg; t.classList.add("show"); setTimeout(function(){ t.classList.remove("show"); t.textContent="✓ Progress saved"; }, 2200); } }, 600);
     }
   }catch(e){}
-})();
+}
 
-render();
+/* ===== Profiles & boot ===== */
+function setProfile(p){
+  profile = p;
+  window.__profile = p;
+  PROGRAM = (p==="riya") ? PROGRAM_RIYA : PROGRAM_SOUMITRA;
+  SUGGEST = (p==="riya") ? SUGGEST_RIYA : SUGGEST_SOUMITRA;
+  STORE_KEY   = "leanfit_"+p+"_progress_v2";
+  WEEK_KEY    = "leanfit_"+p+"_week_v2";
+  MEALS_KEY   = "leanfit_"+p+"_meals_v1";
+  TARGETS_KEY = "leanfit_"+p+"_targets_v1";
+  BODY_KEY    = "leanfit_"+p+"_body_v1";
+  APIKEY_KEY  = "leanfit_"+p+"_openai_key_v1";
+  state = loadState();
+  currentWeek = loadWeek();
+  meals = loadJSON(MEALS_KEY, {});
+  targets = loadJSON(TARGETS_KEY, (p==="riya") ? {kcal:1500, protein:95} : {kcal:1800, protein:110});
+  body = loadJSON(BODY_KEY, {});
+  activeView = "d1"; activeDay = "d1"; mealDate = todayStr();
+}
+
+let splashDone=false;
+function splashKey(e){ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); dismissSplash(); } }
+function dismissSplash(){
+  if(splashDone) return; splashDone=true;
+  const s=document.getElementById("splash");
+  s.classList.add("gone");
+  document.documentElement.classList.remove("splash-lock"); document.body.classList.remove("splash-lock");
+  setTimeout(function(){ s.style.display="none"; }, 520);
+  document.removeEventListener("keydown", splashKey);
+}
+function showSplashFor(p){
+  splashDone=false;
+  document.getElementById("greetName").textContent = (p==="riya") ? "Riya" : "Soumitra";
+  document.getElementById("splashTag").textContent = (p==="riya") ? "Let’s begin your fitness journey 🌸" : "Let’s start the workout for today 💪";
+  const s=document.getElementById("splash");
+  s.style.display="flex"; s.classList.remove("gone");
+  document.documentElement.classList.add("splash-lock"); document.body.classList.add("splash-lock");
+  document.addEventListener("keydown", splashKey);
+  const b=document.getElementById("enterBtn"); if(b) b.onclick=dismissSplash;
+  s.onclick=function(){ dismissSplash(); };
+}
+function chooseProfile(p){
+  setProfile(p);
+  importHealthParams();
+  render();
+  const ps=document.getElementById("profileSelect");
+  ps.classList.add("gone");
+  setTimeout(function(){ ps.style.display="none"; }, 400);
+  showSplashFor(p);
+}
+document.querySelectorAll("#profileSelect .ps-card").forEach(function(c){
+  c.addEventListener("click", function(){ chooseProfile(c.dataset.profile); });
+});
 </script>
 
 <script type="module">
@@ -1948,11 +2218,13 @@ window.cloudSignIn = async function(){
 };
 getRedirectResult(auth).catch(function(){});
 
+function userRef(){ return doc(db,"users", uid + "__" + (window.__profile || "default")); }
+
 window.__cloudPush = function(){
   if(!uid || window.__applyingRemote) return;
   clearTimeout(pushTimer);
   pushTimer = setTimeout(async function(){
-    try { await setDoc(doc(db,"users",uid), window.__getSnapshot()); setStatus("Synced ✓ "+new Date().toLocaleTimeString()); }
+    try { await setDoc(userRef(), window.__getSnapshot()); setStatus("Synced ✓ "+new Date().toLocaleTimeString()); }
     catch(e){ setStatus(errText(e)); }
   }, 1200);
 };
@@ -1962,7 +2234,7 @@ onAuthStateChanged(auth, async function(user){
   if(!user){ uid=null; window.__cloudUser=null; setStatus("Not signed in"); return; }
   uid = user.uid; window.__cloudUser = user.email || "signed in"; setStatus("Syncing…");
   try {
-    const ref = doc(db,"users",uid);
+    const ref = userRef();
     const ds = await getDoc(ref);
     if(ds.exists()){
       window.__applyingRemote=true;
